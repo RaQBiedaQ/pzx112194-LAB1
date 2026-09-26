@@ -485,3 +485,13 @@ still fails, paste the complete error on the forum.
 - `lab1/CHECKS.md` is the output of `itsmlab checks 1 --markdown` (regenerated at integration and diffed against
   the hand-written draft: every id and expectation agreed); when a check changes, regenerate the file from the
   checker rather than editing it.
+
+## Lab 2 package (this repository root)
+
+| file | what it is |
+|---|---|
+| `METRIC-SPEC.md` | the whole rulebook: five DORA metrics, six edge cases, the two endpoints, the gaming gates, the tolerances |
+| `CHECKS.md` | every published Tier A check for Lab 2, generated from the checker itself |
+| `EDGE-CASES-template.md` | the shape of the reasoning artifact (see `EDGE-CASES.md` for the filled version) |
+| `gaming-template.json` | the shape of `gaming.json` (see the filled version at the repo root) |
+| `fixtures/` | the practice event log and its published expected values |

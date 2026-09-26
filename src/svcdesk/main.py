@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import config, sla, storage
+from . import metrics as dora_metrics
 from .errors import ApiError, api_error_handler, validation_error_handler, http_exception_handler
 
 app = FastAPI(title="svcdesk")
@@ -271,3 +272,51 @@ async def get_sla(ticket_id: str, request: Request):
         "resolve_breached": resolve_breached,
         "paused": paused,
     }
+
+
+# -------------------------- Lab 2: DORA metrics endpoints --------------------------
+
+# ai-generated: 85% - Claude (AI assistant) generated this section from METRIC-SPEC.md sections 6-7 under the student's direction.
+
+
+@app.post("/dora/metrics")
+async def dora_metrics_endpoint(payload: dict = Body(default={})):
+    """METRIC-SPEC.md section 6: a pure function of (window, events)."""
+    window_from, window_to = dora_metrics.parse_window(payload)
+    events = dora_metrics.parse_events(payload)
+    result = dora_metrics.compute(window_from, window_to, events)
+    return JSONResponse(status_code=200, content=result)
+
+
+_PHASE_STATE = {
+    "created": "new",
+    "acknowledged": "acknowledged",
+    "resolved": "resolved",
+    "closed": "closed",
+}
+
+
+@app.get("/dora/ticket-events")
+async def dora_ticket_events():
+    """METRIC-SPEC.md section 7: the ticket lifecycle stream, ordered by (at, ticket_id)."""
+    events = []
+    for ticket in storage.list_all():
+        for phase, field in (
+            ("created", "created_at"),
+            ("acknowledged", "acknowledged_at"),
+            ("resolved", "resolved_at"),
+            ("closed", "closed_at"),
+        ):
+            at = ticket.get(field)
+            if at:
+                events.append(
+                    {
+                        "ticket_id": ticket["id"],
+                        "at": at,
+                        "phase": phase,
+                        "priority": ticket["priority"],
+                        "state": _PHASE_STATE[phase],
+                    }
+                )
+    events.sort(key=lambda e: (e["at"], e["ticket_id"]))
+    return events
