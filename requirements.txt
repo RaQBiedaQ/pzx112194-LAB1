@@ -1,3 +1,5 @@
 fastapi==0.141.1
 uvicorn==0.52.4
 tzdata==2025.2
+pytest==8.4.2
+requests==2.32.3
