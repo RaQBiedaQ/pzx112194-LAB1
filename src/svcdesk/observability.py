@@ -10,9 +10,20 @@ Deliberately plain prometheus_client, not an OpenTelemetry Prometheus exporter: 
 import time
 from typing import Optional
 
-from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, Histogram, generate_latest
+from prometheus_client import (
+    CONTENT_TYPE_LATEST,
+    CollectorRegistry,
+    Histogram,
+    disable_created_metrics,
+    generate_latest,
+)
 
 from . import config
+
+# A `_created` gauge per series is prometheus_client's default; it carries no rule-relevant
+# information for this lab and only widens the "exactly three labels on every series" surface
+# (M-04, L3-CORE-2.05) with a fourth metric name to reason about.
+disable_created_metrics()
 
 REGISTRY = CollectorRegistry()
 
