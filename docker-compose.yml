@@ -75,5 +75,16 @@ services:
       SVCDESK_URL: http://svcdesk:8080   # the tests read the service URL from this variable
     command: ["python", "-m", "tests.run"]   # the runner: runs the suite, prints the ITSMLAB-TESTS line last
 
+  # Stretch 2 (L3-STRETCH-2, MONITORING-SPEC.md M-30): Toxiproxy in front of svcdesk.
+  #   docker compose --profile gap up -d toxiproxy
+  # then create the proxy and its toxic through the API on 8474 (HANDOUT.md, Stretch 2); the proxy
+  # listens on 8666.
+  toxiproxy:
+    image: ghcr.io/shopify/toxiproxy:2.12.0     # the tag has no "v"
+    profiles: ["gap"]
+    ports:
+      - "8474:8474"                             # the API
+      - "8666:8666"                             # the proxy in front of svcdesk
+
 volumes:
   svcdesk-data:
