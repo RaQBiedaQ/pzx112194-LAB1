@@ -58,13 +58,24 @@ tests:
       - eval_time: 397m
         alertname: KbSearchAvailabilitySlowBurn
         exp_alerts: []
-      # Confirmed with promtool: the first firing evaluation.
+      # DIAGNOSTIC (temporary): 398m did not fire as hand-calculated; bisecting with several probe
+      # points, each deliberately asserting exp_alerts: [] so promtool's FAILED/"got" output reveals the
+      # real state at each point in one run, without guessing one eval_time per round trip.
       - eval_time: 398m
         alertname: KbSearchAvailabilitySlowBurn
-        exp_alerts:
-          - exp_labels:
-              service: svcdesk
-              slo: availability
-              severity: P2
-            exp_annotations:
-              summary: "/kb/search: burning the 28-day error budget 6x faster than sustainable (6h and 30m windows both above threshold) - worth a look within the working day"
+        exp_alerts: []
+      - eval_time: 405m
+        alertname: KbSearchAvailabilitySlowBurn
+        exp_alerts: []
+      - eval_time: 415m
+        alertname: KbSearchAvailabilitySlowBurn
+        exp_alerts: []
+      - eval_time: 430m
+        alertname: KbSearchAvailabilitySlowBurn
+        exp_alerts: []
+      - eval_time: 450m
+        alertname: KbSearchAvailabilitySlowBurn
+        exp_alerts: []
+      - eval_time: 480m
+        alertname: KbSearchAvailabilitySlowBurn
+        exp_alerts: []
