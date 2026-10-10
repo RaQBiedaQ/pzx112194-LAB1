@@ -64,18 +64,21 @@ tests:
       - eval_time: 398m
         alertname: KbSearchAvailabilitySlowBurn
         exp_alerts: []
-      - eval_time: 405m
+      - eval_time: 399m
         alertname: KbSearchAvailabilitySlowBurn
         exp_alerts: []
-      - eval_time: 415m
+      - eval_time: 400m
         alertname: KbSearchAvailabilitySlowBurn
         exp_alerts: []
-      - eval_time: 430m
+      - eval_time: 401m
         alertname: KbSearchAvailabilitySlowBurn
         exp_alerts: []
-      - eval_time: 450m
+      - eval_time: 402m
         alertname: KbSearchAvailabilitySlowBurn
         exp_alerts: []
-      - eval_time: 480m
+      - eval_time: 403m
+        alertname: KbSearchAvailabilitySlowBurn
+        exp_alerts: []
+      - eval_time: 404m
         alertname: KbSearchAvailabilitySlowBurn
         exp_alerts: []
