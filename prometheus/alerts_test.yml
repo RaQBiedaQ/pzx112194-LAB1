@@ -54,31 +54,18 @@ tests:
       - series: 'http_server_request_duration_seconds_count{job="svcdesk", instance="svcdesk:8080", http_request_method="GET", http_route="/kb/search", http_response_status_code="502"}'
         values: '0x370 0+600x400'
     alert_rule_test:
-      # Confirmed with promtool: not yet firing one evaluation before the first firing one.
-      - eval_time: 397m
-        alertname: KbSearchAvailabilitySlowBurn
-        exp_alerts: []
-      # DIAGNOSTIC (temporary): 398m did not fire as hand-calculated; bisecting with several probe
-      # points, each deliberately asserting exp_alerts: [] so promtool's FAILED/"got" output reveals the
-      # real state at each point in one run, without guessing one eval_time per round trip.
+      # Confirmed with promtool (bisected: not firing through 398m, firing from 399m):
+      # one evaluation before the first firing one.
       - eval_time: 398m
         alertname: KbSearchAvailabilitySlowBurn
         exp_alerts: []
+      # Confirmed with promtool: the first firing evaluation.
       - eval_time: 399m
         alertname: KbSearchAvailabilitySlowBurn
-        exp_alerts: []
-      - eval_time: 400m
-        alertname: KbSearchAvailabilitySlowBurn
-        exp_alerts: []
-      - eval_time: 401m
-        alertname: KbSearchAvailabilitySlowBurn
-        exp_alerts: []
-      - eval_time: 402m
-        alertname: KbSearchAvailabilitySlowBurn
-        exp_alerts: []
-      - eval_time: 403m
-        alertname: KbSearchAvailabilitySlowBurn
-        exp_alerts: []
-      - eval_time: 404m
-        alertname: KbSearchAvailabilitySlowBurn
-        exp_alerts: []
+        exp_alerts:
+          - exp_labels:
+              service: svcdesk
+              slo: availability
+              severity: P2
+            exp_annotations:
+              summary: "/kb/search: burning the 28-day error budget 6x faster than sustainable (6h and 30m windows both above threshold) - worth a look within the working day"
