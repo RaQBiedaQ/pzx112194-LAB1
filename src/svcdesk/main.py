@@ -4,13 +4,16 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
+import httpx
 from fastapi import FastAPI, Body, Request
+from fastapi.responses import Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import config, sla, storage
 from . import metrics as dora_metrics
+from . import observability
 from .errors import ApiError, api_error_handler, validation_error_handler, http_exception_handler
 
 app = FastAPI(title="svcdesk")
@@ -18,6 +21,8 @@ app = FastAPI(title="svcdesk")
 app.add_exception_handler(ApiError, api_error_handler)
 app.add_exception_handler(RequestValidationError, validation_error_handler)
 app.add_exception_handler(StarletteHTTPException, http_exception_handler)
+
+app.add_middleware(observability.MetricsMiddleware)
 
 VALID_STATES = ("new", "acknowledged", "in_progress", "resolved", "closed")
 
@@ -320,3 +325,51 @@ async def dora_ticket_events():
                 )
     events.sort(key=lambda e: (e["at"], e["ticket_id"]))
     return events
+
+
+# -------------------------- Lab 3: /metrics and GET /kb/search --------------------------
+
+# ai-generated: 80% - Claude (AI assistant) generated this section from MONITORING-SPEC.md M-02 to M-04 under the student's direction.
+
+_kb_index_client: Optional[httpx.AsyncClient] = None
+
+
+def _kb_index_client_instance() -> httpx.AsyncClient:
+    global _kb_index_client
+    if _kb_index_client is None:
+        _kb_index_client = httpx.AsyncClient(timeout=config.kb_index_timeout_seconds())
+    return _kb_index_client
+
+
+@app.get("/metrics")
+async def metrics_endpoint():
+    """MONITORING-SPEC.md M-03: the Prometheus text exposition format. A JSON or octet-stream
+    Content-Type here makes Prometheus 3 refuse to scrape the service at all (HANDOUT.md's own
+    "when a check fails" table, row 2.04/4.04/6.03/6.04), so the exact media type matters."""
+    body, content_type = observability.metrics_response()
+    return Response(content=body, media_type=content_type)
+
+
+@app.get("/kb/search")
+async def kb_search(q: Optional[str] = None):
+    """MONITORING-SPEC.md M-02: exactly one upstream call, no cache, no retry. A q of 1 to 200
+    characters is required; anything else is a validation error, never an upstream call."""
+    if q is None or not (1 <= len(q) <= 200):
+        raise ApiError(422, "validation", "q must be a string of 1 to 200 characters")
+
+    url = f"{config.kb_index_url()}/search"
+    try:
+        upstream = await _kb_index_client_instance().get(url, params={"q": q})
+    except httpx.HTTPError:
+        raise ApiError(502, "upstream_unavailable", "kb-index did not answer")
+
+    if upstream.status_code != 200:
+        raise ApiError(502, "upstream_unavailable", f"kb-index answered {upstream.status_code}")
+
+    try:
+        body = upstream.json()
+        hits = body["hits"]
+    except (ValueError, KeyError, TypeError):
+        raise ApiError(502, "upstream_unavailable", "kb-index answered a malformed body")
+
+    return {"query": q, "hits": hits}

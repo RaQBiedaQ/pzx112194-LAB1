@@ -1,7 +1,7 @@
-# Course template - Lab 1 compose contract (API.md section 9).
-# The checker enforces: a service named exactly "svcdesk", port 8080 inside the container,
-# SVCDESK_TEST_CLOCK set, no host-path bind mounts on any service, and images that need
-# no network once built (dependencies are installed at build time, never at start).
+# Course template - Lab 1 compose contract (API.md section 9), extended by Lab 2 (tests profile) and
+# Lab 3 (kb-index, prometheus, grafana - compose-lab3.yml; MONITORING-SPEC.md M-01).
+# The checker enforces: svcdesk and kb-index, no host-path bind mounts on either, images that need
+# no network once built (dependencies installed at build time, never at start).
 services:
   svcdesk:
     build: .                      # copy Dockerfile.example to Dockerfile, or write your own
@@ -9,8 +9,11 @@ services:
       - "8080:8080"               # recommended for local work; the checker removes it in container mode
     environment:
       SVCDESK_TEST_CLOCK: "1"     # required: enables the X-Test-Clock header (API.md section 8)
+      KB_INDEX_URL: http://kb-index:8080    # Lab 3 M-02; the code falls back to this value when unset
     volumes:
       - svcdesk-data:/data        # a NAMED volume is fine; "./data:/data" (a bind mount) fails check 1.02
+    depends_on:
+      - kb-index
     # A healthcheck makes "docker compose up --wait" wait for readiness, and lets the "tests"
     # service below use depends_on: condition: service_healthy (L2-STRETCH-3).
     # python:3.13-slim has no curl, so this one uses Python.
@@ -20,6 +23,39 @@ services:
       timeout: 3s
       retries: 20
       start_period: 5s
+
+  # Lab 3: the knowledge-base search dependency behind GET /kb/search (MONITORING-SPEC.md M-01).
+  # The checker and the grader replace image and login with their own; what matters locally is that the
+  # service exists. No healthcheck: the image has no shell, so a command-based check never passes
+  # (L3-CORE-1.04); without one, "up --wait" waits only for the container to be running.
+  kb-index:
+    image: ghcr.io/swasik/seeded-toxic:2026
+    environment:
+      SEEDED_TOXIC_LOGIN: "RaQBiedaQ"   # our own GitHub login (the one our receipts carry)
+    ports:
+      - "8081:8080"                     # optional: /stats and /admin/degrade from the laptop
+
+  # Lab 3: our own Prometheus and Grafana (compose profile "observability"). The checker never starts
+  # these two; it runs its own Prometheus against our /metrics and our prometheus/alerts.yml.
+  prometheus:
+    image: prom/prometheus:v3.15.0
+    profiles: ["observability"]
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus:/etc/prometheus:ro
+
+  grafana:
+    image: grafana/grafana:13.2.3
+    profiles: ["observability"]
+    ports:
+      - "3000:3000"
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
 
   # Stretch S3 (own tests, L2-STRETCH-3). The checker builds every image up front
   # (docker compose --profile tests build; a tests image that does not build costs S3, never Core), then runs
