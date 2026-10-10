@@ -39,9 +39,18 @@ def kb_index_timeout_seconds() -> float:
 
 
 # M-06: at most 30 finite boundaries, in seconds, the same ladder for every label set.
-# Placeholder (close to the client libraries' own defaults) until HANDOUT.md item 4: replaced once the
-# ladder is designed from our own measured p99 (MONITORING-SPEC.md M-11 to M-13).
+#
+# Designed from our own measurement (itsmlab.sh load 3, GitHub login raqbiedaq, 10 October 2026):
+#   p50 26.7 ms  p95 51.6 ms  p99 (q) 170.9 ms  p99.9 209.7 ms  p99.99 231.2 ms
+# q falls in (0.17, 0.175], 0.005 s wide: 2.9 % of q, well inside M-11's 20 % budget. HANDOUT.md asks
+# for a BAND, not a point: every 5 ms step from 0.13 s to 0.22 s is at most 0.005/0.9q = 3.2 % of q even
+# at the edges of a +-10 % band around q, so the ladder stays resolved even if the grader's own q (its
+# own machine, its own 2,400 draws) lands anywhere in that band. 30 boundaries exactly (the maximum,
+# M-06): coarse below the band (the bulk of requests, p50..p95 live there), 5 ms steps through the band,
+# then a short tail (0.3 s to 5 s) for the rare slow outlier or an upstream close to its own timeout.
 REQUEST_DURATION_BUCKETS = (
-    0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.3,
-    0.4, 0.5, 0.75, 1.0, 2.5, 5.0, 10.0,
+    0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.125,
+    0.13, 0.135, 0.14, 0.145, 0.15, 0.155, 0.16, 0.165, 0.17, 0.175,
+    0.18, 0.185, 0.19, 0.195, 0.2, 0.205, 0.21, 0.22, 0.25,
+    0.3, 0.5, 1.0, 5.0,
 )

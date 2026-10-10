@@ -3,11 +3,11 @@ lab3_first_draft:
   source: ai
   tool: "Claude (Claude Sonnet 5, Anthropic), 10 October 2026"
   ladder: [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10]
-  verdict: TODO
-  evidence: {p99_seconds: TODO, bucket: [TODO, TODO], relative_width: TODO}
+  verdict: refuted
+  evidence: {p99_seconds: 0.1709, bucket: [0.1, 0.25], relative_width: 0.878}
 lab3_flawed_ladder:
   verdict: refuted
-  evidence: {p99_seconds: TODO, bucket: [TODO, TODO], relative_width: TODO}
+  evidence: {p99_seconds: 0.1709, bucket: [0.04, 0.5], relative_width: 2.691}
 ---
 <!-- ai-generated: 70% - the assistant wrote the Prompt/Answer exchange (asked and answered as instructed by HANDOUT.md before any design or measurement) and drafted the verdict arithmetic; the student reviewed it and supplied the real measurement. -->
 
@@ -65,7 +65,15 @@ actual SLOs call for, and the 5-minute window to balance responsiveness against 
 
 ## Verdict on the draft ladder
 
-TODO - filled in after `./itsmlab.sh load 3` measures our real p99 (see evidence in the front matter).
+Measured with `itsmlab.sh load 3` (GitHub login raqbiedaq, 10 October 2026, open-loop 40 req/s for
+60 s): p99 (q) = 0.1709 s. In the draft's ladder `[0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5,
+10]`, the largest boundary below q is 0.1 and the smallest at or above it is 0.25, so q falls in the
+bucket (0.1, 0.25]: 0.15 s wide, (0.25 - 0.1) / 0.1709 = 0.878, or 87.8 % of q - more than four times
+M-11's 20 % budget. `histogram_quantile` over that bucket could report anything from 0.1 s to 0.25 s
+for this p99; the dashboard would show a number that is really a guess about where inside a 150 ms-wide
+bucket the true value sits. **Verdict: refuted.** Between 100 ms and 500 ms this ladder has exactly the
+two buckets MONITORING-SPEC.md warns about, (0.1, 0.25] and (0.25, 0.5] - our own slow mode sits
+squarely inside the first, wide one.
 
 ## The draft alert rule
 
@@ -83,5 +91,12 @@ derived from `slo.md`'s declared objectives rather than picked by feel.
 
 ## Verdict on the instructor's flawed ladder
 
-TODO - filled in after measurement, using the same p99 as the draft's verdict (M-27 requires the same
-measured p99 to 1 % in both evidence blocks).
+Same measured p99, 0.1709 s. `buckets-flawed.example.yml` is
+`[0.001, 0.0025, 0.005, 0.0075, 0.01, 0.0125, 0.015, 0.0175, 0.02, 0.025, 0.03, 0.04, 0.5, 2.5]`: twelve
+boundaries bunched below 40 ms - fine resolution exactly where our median (26.7 ms) lives - then one
+enormous jump straight to 0.5 s. q = 0.1709 s falls in (0.04, 0.5]: 0.46 s wide, (0.5 - 0.04) / 0.1709 =
+2.691, or 269 % of q - more than thirteen times the 20 % budget, and worse than the AI draft's own
+failure. **Verdict: refuted.** This is the ladder's whole design flaw in one number: twelve of its fourteen
+boundaries are spent below 40 ms, resolving a part of the distribution (the median) that was never the
+SLO's concern, and the one bucket that actually holds the p99 is also the widest bucket in the entire
+ladder.
