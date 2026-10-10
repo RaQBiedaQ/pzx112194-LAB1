@@ -28,11 +28,11 @@ tests:
       - series: 'http_server_request_duration_seconds_count{job="svcdesk", instance="svcdesk:8080", http_request_method="GET", http_route="/kb/search", http_response_status_code="502"}'
         values: '0x70 0+600x120'
     alert_rule_test:
-      # TODO (provisional - to confirm with promtool): one evaluation before the first firing one.
+      # Confirmed with promtool: not yet firing one evaluation before the first firing one.
       - eval_time: 85m
         alertname: KbSearchAvailabilityFastBurn
         exp_alerts: []
-      # TODO (provisional - to confirm with promtool): the first firing evaluation.
+      # Confirmed with promtool: the first firing evaluation.
       - eval_time: 86m
         alertname: KbSearchAvailabilityFastBurn
         exp_alerts:
@@ -40,26 +40,31 @@ tests:
               service: svcdesk
               slo: availability
               severity: P1
+            exp_annotations:
+              summary: "/kb/search: burning the 28-day error budget 14.4x faster than sustainable (1h and 5m windows both above threshold) - the 28-day budget is gone in under two days at this rate"
 
   # KbSearchAvailabilitySlowBurn: threshold 6 * (1 - 0.99) = 0.06, long_window 6h, short_window 30m,
-  # for: 5m. 370 minutes (6h10m) of healthy history, then a burn where the post-burn ratio
-  # (100 / (600 + 100) = 0.1429) clears 1.5x the threshold (0.09).
+  # for: 5m. 370 minutes (6h10m) of healthy history, then a burn at the same 600/min rate as the
+  # fast-burn test above, so the post-burn ratio (600 / (600 + 600) = 0.5) clears 1.5x the threshold
+  # (0.09) with a wide margin.
   - interval: 1m
     input_series:
       - series: 'http_server_request_duration_seconds_count{job="svcdesk", instance="svcdesk:8080", http_request_method="GET", http_route="/kb/search", http_response_status_code="200"}'
         values: '0+600x370 222000+600x400'
       - series: 'http_server_request_duration_seconds_count{job="svcdesk", instance="svcdesk:8080", http_request_method="GET", http_route="/kb/search", http_response_status_code="502"}'
-        values: '0x370 0+100x400'
+        values: '0x370 0+600x400'
     alert_rule_test:
-      # TODO (provisional - to confirm with promtool): one evaluation before the first firing one.
-      - eval_time: 460m
+      # Confirmed with promtool: not yet firing one evaluation before the first firing one.
+      - eval_time: 397m
         alertname: KbSearchAvailabilitySlowBurn
         exp_alerts: []
-      # TODO (provisional - to confirm with promtool): the first firing evaluation.
-      - eval_time: 461m
+      # Confirmed with promtool: the first firing evaluation.
+      - eval_time: 398m
         alertname: KbSearchAvailabilitySlowBurn
         exp_alerts:
           - exp_labels:
               service: svcdesk
               slo: availability
               severity: P2
+            exp_annotations:
+              summary: "/kb/search: burning the 28-day error budget 6x faster than sustainable (6h and 30m windows both above threshold) - worth a look within the working day"
