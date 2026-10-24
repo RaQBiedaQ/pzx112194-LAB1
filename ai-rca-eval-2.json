@@ -1,0 +1,50 @@
+{
+ "investigator": {
+  "agent": "agent_capped.py (the course's agent loop, tool results cut to 1200 characters for a free-tier token limit)",
+  "model": "openai/gpt-oss-120b",
+  "mcp_server": "prom_mcp.py (mcp 2.2.0)",
+  "transcript": "ai-rca/second/transcript.md"
+ },
+ "hypotheses": [
+  {
+   "id": "H1",
+   "hypothesis": "The `payment` service generated errors during the incident window.",
+   "component": "payment",
+   "predicts": "sum(rate(traces_span_metrics_calls_total{service_name=\"payment\",status_code=\"STATUS_CODE_ERROR\"}[5m])) > 0.01",
+   "at": "2026-10-12T06:43:00Z",
+   "result": true,
+   "verdict": "correct",
+   "evidence": "Payment spans fail at about 0.03 per second at 06:43:00Z; no payment span failed on the baseline instant (onset minus 300 s, 06:31:23Z)."
+  },
+  {
+   "id": "H2",
+   "hypothesis": "The `checkout` service was unusually slow, likely contributing to the incident.",
+   "component": "checkout",
+   "predicts": "histogram_quantile(0.99, sum by (le) (rate(traces_span_metrics_duration_milliseconds_bucket{service_name=\"checkout\",span_kind=\"SPAN_KIND_SERVER\"}[5m]))) > 100",
+   "at": "2026-10-12T06:43:00Z",
+   "result": false,
+   "verdict": "hallucinated",
+   "evidence": "Checkout's p99 over server spans is about 49.5 ms at 06:43:00Z and was about 49.6 ms on the baseline, so nothing slowed down; the agent compared the average duration of different services with each other, not checkout with itself before the fault, and a 100 ms threshold returns nothing."
+  },
+  {
+   "id": "H3",
+   "hypothesis": "The `frontend‑proxy` service also exhibited elevated latency, which may have amplified the impact of the checkout slowdown.",
+   "component": "frontend-proxy",
+   "predicts": "histogram_quantile(0.99, sum by (le) (rate(traces_span_metrics_duration_milliseconds_bucket{service_name=\"frontend-proxy\",span_kind=\"SPAN_KIND_SERVER\"}[5m]))) > 100",
+   "at": "2026-10-12T06:43:00Z",
+   "result": false,
+   "verdict": "hallucinated",
+   "evidence": "Frontend-proxy's p99 over server spans is about 9 ms at 06:43:00Z, lower than its 47 ms on the baseline (the flood of fast requests pulls the quantile down), so no elevated latency exists and the query returns nothing."
+  },
+  {
+   "id": "H4",
+   "hypothesis": "A failure in the `payment` service (error spikes on its charge operation) combined with a latency spike in the `checkout` service (≈ 46 ms average) created a cascade that manifested as the errors observed at 06:39:19 Z.",
+   "component": "payment",
+   "predicts": "sum(rate(traces_span_metrics_calls_total{service_name=\"payment\",status_code=\"STATUS_CODE_ERROR\"}[5m])) > 0.01 unless on() histogram_quantile(0.99, sum by (le) (rate(traces_span_metrics_duration_milliseconds_bucket{service_name=\"checkout\",span_kind=\"SPAN_KIND_SERVER\"}[5m]))) > 100",
+   "at": "2026-10-12T06:43:00Z",
+   "result": true,
+   "verdict": "partially_correct",
+   "evidence": "The payment half holds (errors on payment at 06:43:00Z, none on the baseline), and the checkout latency half does not (its p99 stays under 100 ms); the query is true exactly when payment errs and checkout is not slow."
+  }
+ ]
+}
