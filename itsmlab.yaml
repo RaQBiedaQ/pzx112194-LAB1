@@ -1,6 +1,6 @@
 # itsmlab.yaml - read by the checker (itsmlab) and by the wrappers itsmlab.sh / itsmlab.ps1.
-lab: 3                                   # the lab this repository is currently submitting
-baselines: {lab1: student}          # Lab 2 builds on our own accepted Lab 1 submission
+lab: 4                                   # the lab this repository is currently submitting
+baselines: {lab1: student, lab3: student}   # Lab 4 builds on our own Lab 3 (alerts.yml, histogram)
 repository: "RaQBiedaQ/pzx112194-LAB1"             # your public GitHub repository, e.g. "jkowalski/itsm-svcdesk"
 submissions_repo: swasik/itsm-2026-submissions
 checker_image: ghcr.io/swasik/itsmlab:2026  # the course tag: leave it; a checker update is `docker pull` of this tag

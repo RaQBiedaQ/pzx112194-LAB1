@@ -1,0 +1,30 @@
+# ai-generated: 60% - Claude drafted the tree and the inhibit rule from INCIDENT-SPEC.md I-04 to I-08; the student reviewed the receivers, the severities and the equal label.
+# alertmanager/alertmanager.yml - your routing tree (INCIDENT-SPEC.md I-04 to I-08).
+global:
+  resolve_timeout: 5m
+route:
+  receiver: chat                  # the root: P2, P3 and anything unlabelled end up in chat, never on the pager
+  group_by: [alertname, service]
+  group_wait: 10s
+  group_interval: 1m
+  repeat_interval: 4h
+  routes:
+    - matchers: ['severity="P1"']
+      receiver: pager
+    - matchers: ['severity=~"P2|P3"']
+      receiver: chat
+receivers:
+  - name: pager
+    webhook_configs:
+      - url: http://pager:8080/hook/pager
+        send_resolved: true
+  - name: chat
+    webhook_configs:
+      - url: http://pager:8080/hook/chat
+        send_resolved: true
+inhibit_rules:
+  # While a shop P1 fires, mute the shop's P2 and P3 in the same cluster: one page, not a storm. `cluster` is a static
+  # label of every demo-alerts.yml rule, so both alerts of a real incident carry it; a P1 of another cluster mutes nothing.
+  - source_matchers: ['severity="P1"']
+    target_matchers: ['severity=~"P2|P3"']
+    equal: [cluster]

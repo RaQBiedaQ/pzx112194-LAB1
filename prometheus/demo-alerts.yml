@@ -1,0 +1,67 @@
+# ai-generated: 60% - Claude drafted the rules and thresholds from INCIDENT-SPEC.md and the shop's span metrics; the student reviewed them and chose what pages and what goes to chat.
+# prometheus/demo-alerts.yml - symptom alerts on the shop (INCIDENT-SPEC.md I-01, I-02, I-05).
+#
+# All four rules sit in ONE group, so that alerts seeing the same symptom start on the same evaluation and the most
+# severe one wins the detection (I-12). They page on SERVER spans only (what a service answered its callers): the load
+# generator's own client calls fail all the time on the healthy shop. Windows are 5 minutes or more, because the span
+# metrics arrive once a minute. Every rule carries `cluster: shop`, the label the inhibition in alertmanager.yml
+# compares. No rule selects a seeded_* series (I-02).
+groups:
+  - name: shop-symptoms
+    rules:
+      # P1: what the shop's users feel at checkout - orders failing.
+      - alert: CheckoutErrorRate
+        expr: |
+          sum(rate(traces_span_metrics_calls_total{service_name="checkout", span_kind="SPAN_KIND_SERVER", status_code="STATUS_CODE_ERROR"}[5m]))
+          /
+          sum(rate(traces_span_metrics_calls_total{service_name="checkout", span_kind="SPAN_KIND_SERVER"}[5m]))
+          > 0.05
+        for: 2m
+        labels:
+          service: checkout
+          severity: P1
+          cluster: shop
+        annotations:
+          summary: "More than 5 % of checkout requests fail"
+
+      # P1: what the shop's users feel at checkout - orders slow. Covers the draws whose only checkout symptom is latency.
+      - alert: CheckoutLatencyHigh
+        expr: |
+          histogram_quantile(0.99, sum by (le) (rate(traces_span_metrics_duration_milliseconds_bucket{service_name="checkout", span_kind="SPAN_KIND_SERVER"}[5m]))) > 2000
+        for: 2m
+        labels:
+          service: checkout
+          severity: P1
+          cluster: shop
+        annotations:
+          summary: "checkout p99 latency is above 2 seconds"
+
+      # P2: the storefront itself fails - goes to chat, muted while a shop P1 fires.
+      - alert: FrontendErrorRate
+        expr: |
+          sum(rate(traces_span_metrics_calls_total{service_name="frontend", span_kind="SPAN_KIND_SERVER", status_code="STATUS_CODE_ERROR"}[5m]))
+          /
+          sum(rate(traces_span_metrics_calls_total{service_name="frontend", span_kind="SPAN_KIND_SERVER"}[5m]))
+          > 0.10
+        for: 3m
+        labels:
+          service: frontend
+          severity: P2
+          cluster: shop
+        annotations:
+          summary: "More than 10 % of frontend requests fail"
+
+      # P3: the catalog is a dependency of most pages; a ticket-worthy warning, not a page.
+      - alert: ProductCatalogErrorRate
+        expr: |
+          sum(rate(traces_span_metrics_calls_total{service_name="product-catalog", span_kind="SPAN_KIND_SERVER", status_code="STATUS_CODE_ERROR"}[5m]))
+          /
+          sum(rate(traces_span_metrics_calls_total{service_name="product-catalog", span_kind="SPAN_KIND_SERVER"}[5m]))
+          > 0.05
+        for: 5m
+        labels:
+          service: product-catalog
+          severity: P3
+          cluster: shop
+        annotations:
+          summary: "More than 5 % of product-catalog requests fail"

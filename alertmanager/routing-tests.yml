@@ -1,0 +1,21 @@
+# ai-generated: 60% - Claude drafted the cases from the rules in demo-alerts.yml and alerts.yml; the student reviewed the receivers and the inhibition pair.
+# alertmanager/routing-tests.yml - the cases that prove alertmanager.yml (INCIDENT-SPEC.md I-06 to I-08).
+routes:
+  - labels: {alertname: CheckoutErrorRate, service: checkout, severity: P1, cluster: shop}
+    receivers: [pager]
+  - labels: {alertname: FrontendErrorRate, service: frontend, severity: P2, cluster: shop}
+    receivers: [chat]
+  - labels: {alertname: ProductCatalogErrorRate, service: product-catalog, severity: P3, cluster: shop}
+    receivers: [chat]
+  - labels: {alertname: KbSearchAvailabilityFastBurn, service: svcdesk, slo: availability, severity: P1}
+    receivers: [pager]
+  - labels: {alertname: KbSearchAvailabilitySlowBurn, service: svcdesk, slo: availability, severity: P2}
+    receivers: [chat]
+inhibitions:
+  # The pair of I-08: the same source, two targets that differ only in `cluster`, the label the rule lists in `equal`.
+  - source: {alertname: CheckoutErrorRate, service: checkout, severity: P1, cluster: shop}
+    target: {alertname: FrontendErrorRate, service: frontend, severity: P2, cluster: shop}
+    inhibited: true
+  - source: {alertname: CheckoutErrorRate, service: checkout, severity: P1, cluster: shop}
+    target: {alertname: FrontendErrorRate, service: frontend, severity: P2, cluster: other}
+    inhibited: false

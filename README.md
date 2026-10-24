@@ -508,3 +508,14 @@ still fails, paste the complete error on the forum.
 | `prometheus/`, `grafana/` | our own Prometheus and Grafana configuration (compose profile `observability`); the checker never starts either |
 | `genai/` | Stretch 1 (`genai-diff`): `capture.py` (the capture script), `spans.json` and `DIFF.md` (the filled deliverables) |
 | `gap/` | Stretch 2 (`latency-gap`): `README.md`, the filled deliverable explaining the client-server gap |
+
+## Lab 4 package (this repository root)
+
+| file | what it is |
+|---|---|
+| `HANDOUT.md`, `INCIDENT-SPEC.md` | the Lab 4 handout and the whole rulebook (I-01 to I-32) |
+| `CHECKS.md` | every published Tier A check |
+| `playground/` | the course overlay for the OpenTelemetry Demo 3.1.0 (live path only) |
+| `agent/` | the course's Prometheus MCP server and agent loop |
+| `recorded/` | the recorded-incident path and how to serve a snapshot |
+| `*-template.yml`, `*-template.md`, `ai-rca-eval-template.json` | shapes of `prometheus/demo-alerts.yml`, `alertmanager/*.yml`, `postmortem.md`, `ai-rca-eval.json`, `comms-log.md` |
