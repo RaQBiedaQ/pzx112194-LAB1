@@ -10,3 +10,4 @@ data/
 
 # Lab 4: Gemini CLI settings hold machine paths
 .gemini/
+.other-recordings/
