@@ -519,3 +519,17 @@ still fails, paste the complete error on the forum.
 | `agent/` | the course's Prometheus MCP server and agent loop |
 | `recorded/` | the recorded-incident path and how to serve a snapshot |
 | `*-template.yml`, `*-template.md`, `ai-rca-eval-template.json` | shapes of `prometheus/demo-alerts.yml`, `alertmanager/*.yml`, `postmortem.md`, `ai-rca-eval.json`, `comms-log.md` |
+
+## Lab 5 package (this repository root)
+
+| file | what it is |
+|---|---|
+| `HANDOUT.md`, `CI-SPEC.md` | the Lab 5 handout and the whole rulebook (P-01 to P-31) |
+| `CHECKS.md` | every published Tier A check |
+| `.github/workflows/ci.yml`, `.github/actions/`, `tools/` | the course's pipeline skeleton, wired to this repository's build and tests |
+| `.trivyignore`, `.gitleaksignore` | ignores with a reason and an expiry (P-06) |
+| `bakeoff.py` | the per-tool confusion matrix of SARIF against labels (P-23) |
+| `TRIAGE-template.md`, `bakeoff-skeleton.py` | the shapes of `TRIAGE.md` and `bakeoff.py` |
+| `mutation/` | Stretch 1: the course module `slaclock.py` and its README |
+
+The practice set `lab5-practice/`, the skeleton folder `pipeline/` and `semgrep-example/` are kept outside the repository: they hold fake credentials, vulnerable pins and a second copy of the workflows by design.

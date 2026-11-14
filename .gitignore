@@ -11,3 +11,8 @@ data/
 # Lab 4: Gemini CLI settings hold machine paths
 .gemini/
 .other-recordings/
+
+# Lab 5: the course package folders that must stay out of the repository (fake credentials, a second copy of the workflows)
+/lab5-practice/
+/pipeline/
+/semgrep-example/

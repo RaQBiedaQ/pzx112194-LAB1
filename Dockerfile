@@ -7,6 +7,9 @@
 # you are running an old checker image: `docker pull ghcr.io/swasik/itsmlab:2026` and rerun.
 FROM python:3.13-slim
 
+# Lab 5: fixable OS-level CVEs of the base image are closed by upgrading its packages right after the FROM.
+RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 # Dependencies first, so Docker caches this layer while you edit code.
@@ -14,7 +17,8 @@ WORKDIR /app
 #   fastapi==0.141.1
 #   uvicorn==0.52.4
 COPY requirements.txt /app/requirements.txt
-RUN pip install --no-cache-dir -r /app/requirements.txt
+# pip only installs: it is removed so that the CVEs of its vendored copies (pip/_vendor) are not in the image.
+RUN pip install --no-cache-dir -r /app/requirements.txt && pip uninstall -y pip
 
 # Your code lives under src/ (see src/README.md). Adjust the module path in CMD to your layout.
 COPY src/ /app/src/
