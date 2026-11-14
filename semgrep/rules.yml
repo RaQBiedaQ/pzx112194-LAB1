@@ -1,0 +1,17 @@
+# ai-generated: 80% - Claude wrote both rules and their tests for svcdesk (src/svcdesk); the student chose which service decisions to guard
+rules:
+  - id: svcdesk-direct-clock-read
+    languages: [python]
+    severity: WARNING
+    message: >-
+      datetime.now() reads the wall clock directly. svcdesk takes the time from resolve_now(request) so that the
+      X-Test-Clock header works in tests; the single allowed call is the one inside resolve_now (src/svcdesk/main.py),
+      so a hit anywhere else is a bug.
+    pattern: datetime.now(...)
+  - id: svcdesk-sqlite-connect
+    languages: [python]
+    severity: WARNING
+    message: >-
+      sqlite3.connect() opens the ticket database. storage.py owns the one shared connection (_connection());
+      every other module must go through the storage functions, so a hit outside storage.py is a bug.
+    pattern: sqlite3.connect(...)
