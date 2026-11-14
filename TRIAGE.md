@@ -13,9 +13,9 @@ What the gates and the reporting scanners found on my service, and what I did ab
 | trivy | CVE-2025-71176 | fix | pytest 8.4.2 in requirements.txt line 4 has a medium advisory fixed in 9.0.3; the pin is raised to 9.0.3. pytest is the test runner only, and src/tests/run.py uses only pytest.main and a report hook, which are unchanged. |
 | trivy | CVE-2024-47081 | fix | requests 2.32.3 in requirements.txt line 5 can leak .netrc credentials through a crafted URL; fixed in 2.32.4. The pin is raised to 2.33.0, which also carries the fix for CVE-2026-25645. |
 | trivy | CVE-2026-25645 | fix | requests 2.32.3 has this medium advisory, fixed in 2.33.0. The pin is raised to 2.33.0 in requirements.txt; requests is used only by the test fixtures in src/tests/conftest.py. |
-| grype | GHSA-6w46-j5rx-g56g | fix | The GitHub advisory id of the same pytest 8.4.2 finding as CVE-2025-71176 (Trivy): closed by the same pin change to 9.0.3 in requirements.txt. |
-| grype | GHSA-9hjg-9r4m-mvj7 | fix | The GitHub advisory id of the requests 2.32.3 finding CVE-2024-47081 (Trivy): closed by raising requests to 2.33.0 in requirements.txt. |
-| grype | GHSA-gc5v-m9x4-r6x2 | fix | The GitHub advisory id of the requests 2.32.3 finding CVE-2026-25645 (Trivy): closed by raising requests to 2.33.0 in requirements.txt. |
+| grype | GHSA-6w46-j5rx-g56g-pytest | fix | The GitHub advisory id of the same pytest 8.4.2 finding as CVE-2025-71176 (Trivy): closed by the same pin change to 9.0.3 in requirements.txt. |
+| grype | GHSA-9hjg-9r4m-mvj7-requests | fix | The GitHub advisory id of the requests 2.32.3 finding CVE-2024-47081 (Trivy): closed by raising requests to 2.33.0 in requirements.txt. |
+| grype | GHSA-gc5v-m9x4-r6x2-requests | fix | The GitHub advisory id of the requests 2.32.3 finding CVE-2026-25645 (Trivy): closed by raising requests to 2.33.0 in requirements.txt. |
 | osv-scanner | CVE-2024-47081 | fix | requests 2.32.3, the same finding as in Trivy and Grype; OSV-Scanner reports it twice (two lock entries for requirements.txt), and the one pin change to 2.33.0 removes both. |
 | osv-scanner | CVE-2025-71176 | fix | pytest 8.4.2, the same finding as in Trivy and Grype; reported twice for the same file, removed by the pin change to 9.0.3 in requirements.txt. |
 | osv-scanner | CVE-2026-25645 | fix | requests 2.32.3, the same finding as in Trivy and Grype; reported twice for the same file, removed by raising requests to 2.33.0. |
